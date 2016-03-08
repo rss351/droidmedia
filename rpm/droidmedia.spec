@@ -3,7 +3,7 @@
 %define __find_requires     %{nil}
 %global debug_package       %{nil}
 %define __provides_exclude_from ^.*$
-
+%define device_rpm_architecture_string armv7hl
 %define _target_cpu %{device_rpm_architecture_string}
 
 Name:          droidmedia
@@ -11,10 +11,10 @@ Summary:       Android media wrapper library
 Version:       0.0.0
 Release:       1
 Group:         System/Libraries
-License:       ASL 2.0
-BuildRequires: ubu-trusty
-BuildRequires: sudo-for-abuild
-BuildRequires: droid-bin-src-full
+License:       TBD
+#BuildRequires: ubu-trusty
+#BuildRequires: sudo-for-abuild
+#BuildRequires: droid-bin-src-full
 Source0:       %{name}-%{version}.tgz
 AutoReqProv:   no
 
@@ -23,6 +23,7 @@ AutoReqProv:   no
 
 %package       devel
 Summary:       droidmedia development headers
+Group:         System/Libraries
 Requires:      droidmedia = %{version}-%{release}
 BuildArch:     noarch
 
@@ -36,17 +37,27 @@ echo "device_rpm_architecture_string is not defined"
 exit -1
 %endif
 
-%setup -T -c -n droidmedia
-sudo chown -R abuild:abuild /home/abuild/src/droid/
-mv /home/abuild/src/droid/* .
-mkdir -p external
-pushd external
-tar -zxf %SOURCE0
-mv droidmedia* droidmedia
-popd
+%setup
+#%setup -T -c -n droidmedia
+#sudo chown -R abuild:abuild /home/abuild/src/droid/
+#mv /home/abuild/src/droid/* .
+#mkdir -p external
+#pushd external
+#tar -zxf %SOURCE0
+#mv droidmedia* droidmedia
+#popd
 
 %build
-droid-make -j4 libdroidmedia minimediaservice minisfservice
+#droid-make -j4 libdroidmedia minimediaservice minisfservice
+
+# hack: assume that the local directory is $MER_ROOT/devel/mer-hybris/$PKG
+# and that the SOURCE0 tar file (created in the ha-sdk) 
+# has been placed in $MER_ROOT/devel/droid-src
+pwd
+ls
+ls  ../../droid-src/
+cp ../../droid-src/%{name}-%{version}.tgz .
+tar -xvf %{name}-%{version}.tgz
 
 %install
 
@@ -54,7 +65,7 @@ mkdir -p $RPM_BUILD_ROOT/%{_libexecdir}/droid-hybris/system/lib/
 mkdir -p $RPM_BUILD_ROOT/%{_libexecdir}/droid-hybris/system/bin/
 mkdir -p $RPM_BUILD_ROOT/%{_includedir}/droidmedia/
 mkdir -p $RPM_BUILD_ROOT/%{_datadir}/droidmedia/
-
+pushd %name-%version
 cp out/target/product/*/system/lib/libdroidmedia.so \
     $RPM_BUILD_ROOT/%{_libexecdir}/droid-hybris/system/lib/
 
@@ -67,6 +78,7 @@ cp out/target/product/*/system/bin/minisfservice \
 cp external/droidmedia/*.h $RPM_BUILD_ROOT/%{_includedir}/droidmedia/
 cp external/droidmedia/hybris.c $RPM_BUILD_ROOT/%{_datadir}/droidmedia/
 
+popd
 %files
 %defattr(-,root,root,-)
 %{_libexecdir}/droid-hybris/system/lib/libdroidmedia.so
